@@ -3,11 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>華語生存戰：校園日常</title>
+<title>華語生存戰：校園日常 (策略昇華版)</title>
 <style>
-:root { --bg-color:#f0f2f5; --card-bg:#fff; --evt-bg:#ffeaa7; --rsc-bg:#55efc4; --text:#2d3436; --btn-l:#ff7675; --btn-r:#74b9ff; --btn-e:#fdcb6e; }
+:root { --bg-color:#f0f2f5; --card-bg:#fff; --evt-bg:#ffeaa7; --rsc-bg:#55efc4; --pnish-bg:#ff7675; --text:#2d3436; --btn-l:#ff7675; --btn-r:#74b9ff; --btn-e:#fdcb6e; }
 body { font-family:sans-serif; background:var(--bg-color); display:flex; justify-content:center; align-items:center; height:100vh; margin:0; color:var(--text); }
 #game-container { width:100%; max-width:420px; background:var(--card-bg); border-radius:20px; box-shadow:0 15px 35px rgba(0,0,0,0.15); display:flex; flex-direction:column; height:90vh; max-height:750px; position:relative; overflow:hidden; }
+
+/* 難度選擇畫面 */
+#start-screen { position:absolute; inset:0; background:rgba(255,255,255,0.98); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:500; text-align:center; padding:20px; }
+#start-screen h1 { font-size:2.2rem; color:#0984e3; margin-bottom:10px; }
+#start-screen p { font-size:1.1rem; color:#636e72; margin-bottom:30px; }
+.diff-btn { width:80%; padding:15px; margin:10px 0; font-size:1.2rem; font-weight:bold; color:#fff; border:none; border-radius:12px; cursor:pointer; transition:transform 0.2s; }
+.diff-btn:active { transform:scale(0.95); }
+.btn-easy { background:#00b894; } .btn-med { background:#fdcb6e; color:#2d3436; } .btn-hard { background:#d63031; }
+
 #stats-board { display:flex; justify-content:space-around; padding:15px 10px 5px; background:#2d3436; color:#fff; font-size:1.2rem; }
 .stat { display:flex; flex-direction:column; align-items:center; position:relative; }
 .stat-icon { font-size:1.6rem; } .stat-value { font-weight:bold; margin-top:5px; transition:color 0.3s; }
@@ -16,23 +25,32 @@ body { font-family:sans-serif; background:var(--bg-color); display:flex; justify
 @keyframes floatUp { 0%{opacity:1; transform:translateY(0) scale(0.5);} 20%{transform:translateY(-10px) scale(1.2);} 100%{opacity:0; transform:translateY(-40px) scale(1);} }
 .danger { color:#ff4757!important; animation:pulse 1s infinite alternate; }
 @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.2);} }
+
 #buff-board { background:#2d3436; color:#f1c40f; text-align:center; padding:5px 10px 10px; font-size:0.9rem; font-weight:bold; min-height:20px; }
 .buff-badge { background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:10px; margin:0 5px; display:inline-block; }
+
 #buff-toast { position:absolute; top:30%; left:50%; transform:translate(-50%,-50%) scale(0.9); background:rgba(45,52,54,0.95); color:#fff; padding:15px 20px; border-radius:15px; text-align:center; z-index:200; pointer-events:none; opacity:0; transition:all 0.3s; width:80%; }
 #buff-toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
 .toast-title { font-size:1.2rem; font-weight:bold; color:#fdcb6e; margin-bottom:8px;} .toast-desc { font-size:1rem; color:#dfe6e9; line-height:1.4; }
+
 #status-bar { display:flex; justify-content:space-between; padding:10px 20px; font-size:0.9rem; background:#dfe6e9; font-weight:bold; }
 #card-type { color:#0984e3; }
+
+/* 任務目標區 */
+#mission-board { background:#e1f5fe; color:#0277bd; padding:8px 20px; font-size:0.95rem; font-weight:bold; text-align:center; border-bottom:2px solid #b3e5fc; }
+
 #card-area { flex-grow:1; display:flex; justify-content:center; align-items:center; padding:25px; text-align:center; perspective:1000px; transition:background 0.3s;}
 #scenario-text { font-size:1.4rem; line-height:2.4rem; font-weight:500; transform-style:preserve-3d; backface-visibility:hidden; }
 .flip-out { animation:flipOut 0.4s forwards; } .flip-in { animation:flipIn 0.4s forwards; }
 @keyframes flipOut { 0%{transform:rotateY(0deg);opacity:1;} 100%{transform:rotateY(180deg);opacity:0;} }
 @keyframes flipIn { 0%{transform:rotateY(-180deg);opacity:0;} 100%{transform:rotateY(0deg);opacity:1;} }
 ruby { ruby-align:center; } rt { font-size:0.85rem; color:#d63031; font-weight:bold; }
+
 #controls { display:flex; height:130px; }
 .choice-btn { flex:1; border:none; font-size:1.15rem; font-weight:bold; color:#fff; cursor:pointer; padding:15px; transition:opacity 0.2s; display:flex; justify-content:center; align-items:center; line-height:1.5rem; }
 .choice-btn:active { opacity:0.8; }
 #btn-left { background:var(--btn-l); } #btn-right { background:var(--btn-r); } #btn-event { background:var(--btn-e); display:none; color:#2d3436; width:100%; }
+
 #game-over { position:absolute; inset:0; background:rgba(255,255,255,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; z-index:10; }
 #game-over h2 { font-size:2.5rem; color:#d63031; margin-bottom:10px; }
 #restart-btn { margin-top:30px; padding:12px 25px; font-size:1.2rem; background:#2d3436; color:#fff; border:none; border-radius:10px; cursor:pointer; }
@@ -40,6 +58,15 @@ ruby { ruby-align:center; } rt { font-size:0.85rem; color:#d63031; font-weight:b
 </head>
 <body>
 <div id="game-container">
+    
+    <div id="start-screen">
+        <h1>華語生存戰</h1>
+        <p>平衡四大數值，撐過指定天數！<br>（注意：數值超過 90 會引發極限反噬）</p>
+        <button class="diff-btn btn-easy" onclick="startGame(7)">簡單模式 (生存 7 天)</button>
+        <button class="diff-btn btn-med" onclick="startGame(14)">中等模式 (生存 14 天)</button>
+        <button class="diff-btn btn-hard" onclick="startGame(31)">困難模式 (生存 31 天)</button>
+    </div>
+
     <div id="stats-board">
         <div class="stat" id="stat-container-energy" title="體力"><span class="stat-icon">⚡</span><span id="stat-energy" class="stat-value">50</span></div>
         <div class="stat" id="stat-container-money" title="金錢"><span class="stat-icon">💰</span><span id="stat-money" class="stat-value">50</span></div>
@@ -47,28 +74,50 @@ ruby { ruby-align:center; } rt { font-size:0.85rem; color:#d63031; font-weight:b
         <div class="stat" id="stat-container-academic" title="學業"><span class="stat-icon">📚</span><span id="stat-academic" class="stat-value">50</span></div>
     </div>
     <div id="buff-board"></div>
+    <div id="mission-board">🎯 目標：<span id="mission-text">無</span></div>
     <div id="buff-toast"></div>
-    <div id="status-bar"><span id="card-type">日常選擇</span><span>第 <span id="current-day">1</span> 天 / 共 14 天</span></div>
+    <div id="status-bar"><span id="card-type">日常選擇</span><span>第 <span id="current-day">1</span> 天 / 共 <span id="max-days-ui">14</span> 天</span></div>
     <div id="card-area"><div id="scenario-text" class="flip-in">載入中...</div></div>
     <div id="controls">
         <button id="btn-left" class="choice-btn" onclick="handleChoice('left')">左</button>
         <button id="btn-right" class="choice-btn" onclick="handleChoice('right')">右</button>
         <button id="btn-event" class="choice-btn" onclick="handleChoice('event')">確認</button>
     </div>
-    <div id="game-over"><h2 id="end-title">結束</h2><p id="end-message">原因</p><button id="restart-btn" onclick="initGame()">再玩</button></div>
+    <div id="game-over"><h2 id="end-title">結束</h2><p id="end-message">原因</p><button id="restart-btn" onclick="location.reload()">重新選擇難度</button></div>
 </div>
 
 <script>
 let stats = { energy:50, money:50, social:50, academic:50 };
 let currentDay = 1, maxDays = 14, currentCard = null, isAnimating = false;
-let recentCards = [];
-let activeBuffs = [];
+let recentCards = [], activeBuffs = [], currentMission = null, pendingOverload = null;
 
 const buffEffects = {
-    "sick": { name: "🤒 輕微感冒", duration: 2, desc: "體力消耗 1.5 倍", modify: (i) => { if(i.energy<0) i.energy=Math.floor(i.energy*1.5); return i; } },
-    "scholar": { name: "🤓 學習狂熱", duration: 2, desc: "學業加分 1.5 倍", modify: (i) => { if(i.academic>0) i.academic=Math.floor(i.academic*1.5); return i; } },
-    "heartbroken": { name: "💔 傷心欲絕", duration: 3, desc: "人際加分減半", modify: (i) => { if(i.social>0) i.social=Math.floor(i.social*0.5); return i; } },
-    "poor": { name: "💸 吃土月", duration: 2, desc: "金錢消耗 1.5 倍", modify: (i) => { if(i.money<0) i.money=Math.floor(i.money*1.5); return i; } }
+    "sick": { name: "🤒 感冒", duration: 2, desc: "體力消耗 1.5 倍", modify: (i) => { if(i.energy<0) i.energy=Math.floor(i.energy*1.5); return i; } },
+    "scholar": { name: "🤓 狂熱", duration: 2, desc: "學業加分 1.5 倍", modify: (i) => { if(i.academic>0) i.academic=Math.floor(i.academic*1.5); return i; } },
+    "heartbroken": { name: "💔 傷心", duration: 3, desc: "人際加分減半", modify: (i) => { if(i.social>0) i.social=Math.floor(i.social*0.5); return i; } },
+    "poor": { name: "💸 吃土", duration: 2, desc: "金錢消耗 1.5 倍", modify: (i) => { if(i.money<0) i.money=Math.floor(i.money*1.5); return i; } }
+};
+
+const missionsList = [
+    { text: "賺點生活費 (金錢達到 70)", check: () => stats.money >= 70, reward: {energy:0,money:15,social:0,academic:0}, msg: "達成目標：獲得打工獎金！" },
+    { text: "拼好成績 (學業達到 70)", check: () => stats.academic >= 70, reward: {energy:15,money:0,social:0,academic:0}, msg: "達成目標：老師請客，體力恢復！" },
+    { text: "校園人氣王 (人際達到 70)", check: () => stats.social >= 70, reward: {energy:0,money:15,social:0,academic:0}, msg: "達成目標：朋友請吃飯，省下飯錢！" },
+    { text: "保持活力 (體力達到 70)", check: () => stats.energy >= 70, reward: {energy:0,money:0,social:0,academic:15}, msg: "達成目標：精神百倍，讀書超有效率！" },
+    { text: "克制花費 (金錢低於 40)", check: () => stats.money <= 40, reward: {energy:0,money:25,social:0,academic:0}, msg: "達成目標：成功省錢，獲得補助金！" }
+];
+
+const overloadCards = {
+    energy: { text:"💥 【極限反噬：體力爆表】你精力過剩到處跑酷，結果摔斷腿進了醫院！", btnText:"太痛了😭", impact:{energy:-50,money:-20,social:0,academic:0}, applyBuff:null, isEvent:true, type:"punish" },
+    money: { text:"💥 【極限反噬：財富自由】你太有錢被詐騙集團盯上，錢財大失血！", btnText:"我的錢包💸", impact:{energy:0,money:-50,social:-20,academic:0}, applyBuff:"poor", isEvent:true, type:"punish" },
+    social: { text:"💥 【極限反噬：社交過勞】每天交際應酬，完全沒時間休息和讀書...", btnText:"好累...", impact:{energy:-30,money:0,social:0,academic:-40}, applyBuff:"sick", isEvent:true, type:"punish" },
+    academic: { text:"💥 【極限反噬：走火入魔】讀書讀到引發急性腦膜炎，直接送進急診室！", btnText:"救護車🚑", impact:{energy:-100,money:0,social:0,academic:0}, applyBuff:null, isEvent:true, type:"punish" }
+};
+
+const rescueCards = {
+    energy: { text:"👼 【命運救援】快累倒時...校醫打了一針營養劑！", btnText:"活過來了⚡", impact:{energy:+40,money:-10,social:0,academic:0}, isEvent:true, type:"rescue" },
+    money: { text:"👼 【命運救援】快破產時...收到學校清寒獎學金！", btnText:"天降甘霖💰", impact:{energy:0,money:+40,social:0,academic:+10}, isEvent:true, type:"rescue" },
+    social: { text:"👼 【命運救援】快被邊緣時...轉學生主動搭話！", btnText:"太感動🤝", impact:{energy:+5,money:0,social:+40,academic:0}, isEvent:true, type:"rescue" },
+    academic: { text:"👼 【命運救援】面臨退學時...教授給了補考機會！", btnText:"我會努力📚", impact:{energy:-15,money:0,social:0,academic:+40}, isEvent:true, type:"rescue" }
 };
 
 const normalCards = [
@@ -93,58 +142,81 @@ const normalCards = [
 ];
 
 const eventCards = [
-    { text:"🌧️ 【突發】昨天告白被拒絕...心情低落🥀", btnText:"唉... 😔", impact:{energy:-15,money:0,social:-10,academic:-10}, applyBuff:"heartbroken" },
-    { text:"🤧 【突發】同學傳染，你不小心感冒了🤕", btnText:"咳咳... 🍵", impact:{energy:-10,money:0,social:0,academic:0}, applyBuff:"sick" },
-    { text:"💸 【突發】花太兇，正式進入吃土期😭", btnText:"省吃儉用...", impact:{energy:0,money:-15,social:-5,academic:0}, applyBuff:"poor" },
-    { text:"🔥 【突發】突然對學習充滿熱忱！", btnText:"我要讀書！ 📖", impact:{energy:0,money:0,social:-10,academic:+15}, applyBuff:"scholar" },
-    { text:"🎁 【幸運】舊外套發現 1000 元！💸", btnText:"太爽了！", impact:{energy:0,money:+30,social:0,academic:0}, applyBuff:null },
-    { text:"🌪️ 【突發】颱風假！不用上課啦！🥳", btnText:"在家睡爆！", impact:{energy:+30,money:0,social:+5,academic:-10}, applyBuff:null },
-    { text:"🚨 【突發】違停被開紅單...👮", btnText:"我的錢... 😭", impact:{energy:-5,money:-25,social:0,academic:0}, applyBuff:null }
+    { text:"🌧️ 【突發】昨天告白被拒絕...心情低落🥀", btnText:"唉... 😔", impact:{energy:-15,money:0,social:-10,academic:-10}, applyBuff:"heartbroken", type:"event" },
+    { text:"🤧 【突發】同學傳染，你不小心感冒了🤕", btnText:"咳咳... 🍵", impact:{energy:-10,money:0,social:0,academic:0}, applyBuff:"sick", type:"event" },
+    { text:"💸 【突發】花太兇，正式進入吃土期😭", btnText:"省吃儉用...", impact:{energy:0,money:-15,social:-5,academic:0}, applyBuff:"poor", type:"event" },
+    { text:"🔥 【突發】突然對學習充滿熱忱！", btnText:"我要讀書！ 📖", impact:{energy:0,money:0,social:-10,academic:+15}, applyBuff:"scholar", type:"event" },
+    { text:"🎁 【幸運】舊外套發現 1000 元！💸", btnText:"太爽了！", impact:{energy:0,money:+30,social:0,academic:0}, applyBuff:null, type:"event" },
+    { text:"🌪️ 【突發】颱風假！不用上課啦！🥳", btnText:"在家睡爆！", impact:{energy:+30,money:0,social:+5,academic:-10}, applyBuff:null, type:"event" },
+    { text:"🚨 【突發】違停被開紅單...👮", btnText:"我的錢... 😭", impact:{energy:-5,money:-25,social:0,academic:0}, applyBuff:null, type:"event" }
 ];
 
-const rescueCards = {
-    energy: { text:"👼 【命運救援】快累倒時...校醫打了一針營養劑！", btnText:"活過來了⚡", impact:{energy:+40,money:-10,social:0,academic:0} },
-    money: { text:"👼 【命運救援】快破產時...收到學校清寒獎學金！", btnText:"天降甘霖💰", impact:{energy:0,money:+40,social:0,academic:+10} },
-    social: { text:"👼 【命運救援】快被邊緣時...轉學生主動搭話！", btnText:"太感動🤝", impact:{energy:+5,money:0,social:+40,academic:0} },
-    academic: { text:"👼 【命運救援】面臨退學時...教授給了補考機會！", btnText:"我會努力📚", impact:{energy:-15,money:0,social:0,academic:+40} }
-};
-
-function initGame() {
+function startGame(days) {
+    maxDays = days;
+    document.getElementById("start-screen").style.display = "none";
+    document.getElementById("max-days-ui").innerText = days;
     stats = { energy:50, money:50, social:50, academic:50 };
-    currentDay = 1; activeBuffs = []; recentCards = [];
-    document.getElementById("game-over").style.display = "none";
-    updateUI(); drawCard(true); 
+    currentDay = 1; activeBuffs = []; recentCards = []; pendingOverload = null;
+    assignMission();
+    updateUI(); drawCard(true);
+}
+
+function assignMission() {
+    currentMission = missionsList[Math.floor(Math.random() * missionsList.length)];
+    document.getElementById("mission-text").innerText = currentMission.text;
+}
+
+let tOut;
+function showToast(title, desc) {
+    const t = document.getElementById("buff-toast");
+    t.innerHTML = `<div class="toast-title">${title}</div><div class="toast-desc">${desc}</div>`;
+    t.classList.add("show");
+    if(tOut) clearTimeout(tOut);
+    tOut = setTimeout(() => t.classList.remove("show"), 3000);
 }
 
 function drawCard(skipFlipIn = false) {
-    let isEvent = Math.random() < 0.25;
     const textEl = document.getElementById("scenario-text");
     textEl.className = skipFlipIn ? "" : "flip-in";
 
-    const filterRecent = (cards) => {
-        let avail = cards.filter(c => !recentCards.includes(c.text));
-        return avail.length > 0 ? avail : cards; 
-    };
+    if (pendingOverload) {
+        currentCard = pendingOverload;
+        pendingOverload = null;
+    } else {
+        let isEvent = Math.random() < 0.25;
+        const filterRec = (arr) => { let a = arr.filter(c => !recentCards.includes(c.text)); return a.length > 0 ? a : arr; };
 
-    if (isEvent) {
-        let evts = activeBuffs.length > 0 ? eventCards.filter(e => e.applyBuff === null) : eventCards;
-        if (evts.length > 0) {
-            let availEvts = filterRecent(evts);
-            currentCard = { ...availEvts[Math.floor(Math.random() * availEvts.length)], isEvent: true };
-            document.getElementById("card-type").innerText = "⚠️ 突發事件";
-            document.getElementById("card-area").style.background = "var(--evt-bg)";
-            document.getElementById("btn-left").style.display = "none";
-            document.getElementById("btn-right").style.display = "none";
-            document.getElementById("btn-event").style.display = "block";
-            document.getElementById("btn-event").innerHTML = currentCard.btnText;
-        } else isEvent = false; 
-    } 
+        if (isEvent) {
+            let evts = activeBuffs.length > 0 ? eventCards.filter(e => e.applyBuff === null) : eventCards;
+            if (evts.length > 0) { currentCard = { ...filterRec(evts)[Math.floor(Math.random() * filterRec(evts).length)], isEvent:true }; } 
+            else isEvent = false; 
+        } 
+        if (!isEvent) {
+            currentCard = { ...filterRec(normalCards)[Math.floor(Math.random() * filterRec(normalCards).length)], isEvent:false };
+        }
+    }
     
-    if (!isEvent) {
-        let availNorms = filterRecent(normalCards);
-        currentCard = { ...availNorms[Math.floor(Math.random() * availNorms.length)], isEvent: false };
+    // UI 設定
+    if (currentCard.type === "punish") {
+        document.getElementById("card-type").innerText = "💥 極限反噬";
+        document.getElementById("card-area").style.background = "var(--pnish-bg)";
+    } else if (currentCard.type === "rescue") {
+        document.getElementById("card-type").innerText = "👼 命運救援";
+        document.getElementById("card-area").style.background = "var(--rsc-bg)";
+    } else if (currentCard.isEvent) {
+        document.getElementById("card-type").innerText = "⚠️ 突發事件";
+        document.getElementById("card-area").style.background = "var(--evt-bg)";
+    } else {
         document.getElementById("card-type").innerText = "日常選擇";
         document.getElementById("card-area").style.background = "transparent";
+    }
+
+    if (currentCard.isEvent || currentCard.type) {
+        document.getElementById("btn-left").style.display = "none";
+        document.getElementById("btn-right").style.display = "none";
+        document.getElementById("btn-event").style.display = "block";
+        document.getElementById("btn-event").innerHTML = currentCard.btnText || "確認";
+    } else {
         document.getElementById("btn-left").style.display = "flex";
         document.getElementById("btn-right").style.display = "flex";
         document.getElementById("btn-event").style.display = "none";
@@ -153,12 +225,8 @@ function drawCard(skipFlipIn = false) {
     }
     
     textEl.innerHTML = currentCard.text;
-    
-    recentCards.push(currentCard.text);
-    if (recentCards.length > 3) recentCards.shift();
-
-    if (!skipFlipIn) { setTimeout(() => { textEl.classList.remove("flip-in"); isAnimating = false; }, 400); } 
-    else isAnimating = false; 
+    recentCards.push(currentCard.text); if (recentCards.length > 3) recentCards.shift();
+    if (!skipFlipIn) { setTimeout(() => { textEl.classList.remove("flip-in"); isAnimating = false; }, 400); } else isAnimating = false; 
 }
 
 function handleChoice(direction) {
@@ -179,54 +247,50 @@ function showFloat(impactObj) {
     });
 }
 
-let tOut;
-function showToast(bId) {
-    const b = buffEffects[bId];
-    const t = document.getElementById("buff-toast");
-    t.innerHTML = `<div class="toast-title">✨ 獲得狀態：${b.name}</div><div class="toast-desc">${b.desc}<br>(持續 ${b.duration} 天)</div>`;
-    t.classList.add("show");
-    if(tOut) clearTimeout(tOut);
-    tOut = setTimeout(() => t.classList.remove("show"), 3000);
-}
-
-function triggerRescue(fatalKey) {
-    currentCard = { ...rescueCards[fatalKey], isEvent: true };
-    const textEl = document.getElementById("scenario-text");
-    textEl.className = "flip-in";
-    document.getElementById("card-type").innerText = "👼 命運救援";
-    document.getElementById("card-area").style.background = "var(--rsc-bg)"; 
-    document.getElementById("btn-left").style.display = "none";
-    document.getElementById("btn-right").style.display = "none";
-    document.getElementById("btn-event").style.display = "block";
-    document.getElementById("btn-event").innerHTML = currentCard.btnText;
-    textEl.innerHTML = currentCard.text;
-    setTimeout(() => { textEl.classList.remove("flip-in"); isAnimating = false; }, 400); 
-}
-
 function processChoiceData(direction) {
     let rImp = currentCard.isEvent ? {...currentCard.impact} : (direction==='left' ? {...currentCard.left.impact} : {...currentCard.right.impact});
     
     if (currentCard.applyBuff && !activeBuffs.find(b => b.id === currentCard.applyBuff)) {
-        activeBuffs.push({ id: currentCard.applyBuff, daysLeft: buffEffects[currentCard.applyBuff].duration }); 
-        showToast(currentCard.applyBuff); 
+        let b = buffEffects[currentCard.applyBuff];
+        activeBuffs.push({ id: currentCard.applyBuff, daysLeft: b.duration }); 
+        showToast(`✨ 獲得狀態：${b.name}`, `${b.desc} (持續 ${b.duration} 天)`); 
     }
 
     let fImp = { ...rImp };
     activeBuffs.forEach(b => { fImp = buffEffects[b.id].modify(fImp); });
-
     let nStats = { energy:stats.energy+fImp.energy, money:stats.money+fImp.money, social:stats.social+fImp.social, academic:stats.academic+fImp.academic };
+    
+    // 救援機制判定
     let fatal = Object.keys(nStats).find(k => nStats[k] <= 0);
-
-    if (fatal && Math.random() < 0.20) {
+    if (fatal && Math.random() < 0.20 && currentCard.type !== "punish" && currentCard.type !== "rescue") {
         showFloat(fImp);
         ['energy','money','social','academic'].forEach(k => { stats[k] = Math.max(1, Math.min(100, nStats[k])); });
         activeBuffs.forEach(b => b.daysLeft--); activeBuffs = activeBuffs.filter(b => b.daysLeft > 0);
-        currentDay++; updateUI(); triggerRescue(fatal); return;
+        currentDay++; updateUI(); 
+        pendingOverload = rescueCards[fatal]; // 借用 pending 變數強插一張救援卡
+        drawCard(); return;
     }
 
     showFloat(fImp);
     ['energy','money','social','academic'].forEach(k => { stats[k] = Math.max(0, Math.min(100, nStats[k])); });
     activeBuffs.forEach(b => b.daysLeft--); activeBuffs = activeBuffs.filter(b => b.daysLeft > 0);
+    
+    // 檢查任務達成
+    if (currentMission && currentMission.check()) {
+        showToast("🎯 任務達成！", currentMission.msg);
+        showFloat(currentMission.reward);
+        ['energy','money','social','academic'].forEach(k => { stats[k] = Math.min(100, stats[k] + currentMission.reward[k]); });
+        document.getElementById("mission-text").innerText = "已達成 (等待新目標...)";
+        currentMission = null;
+        setTimeout(assignMission, 2500);
+    }
+
+    // 檢查數值反噬 (超過90)
+    let overloadKey = Object.keys(stats).find(k => stats[k] >= 90);
+    if (overloadKey && currentCard.type !== "punish") {
+        pendingOverload = overloadCards[overloadKey];
+    }
+
     currentDay++; updateUI(); checkGameEnd();
 }
 
@@ -247,11 +311,10 @@ function checkGameEnd() {
         document.getElementById("game-over").style.display = "flex";
     } else if (currentDay > maxDays) {
         document.getElementById("end-title").innerText = "🎉 恭喜過關！";
-        document.getElementById("end-message").innerHTML = "成功生存兩週！💯";
+        document.getElementById("end-message").innerHTML = `成功生存 ${maxDays} 天！💯`;
         document.getElementById("game-over").style.display = "flex";
     } else drawCard(); 
 }
-initGame();
 </script>
 </body>
 </html>
