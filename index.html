@@ -1,72 +1,174 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>華語生存戰：校園日常 (無限疊加版)</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>華語生存戰：終極策略版</title>
 <style>
-:root { --bg-color:#f0f2f5; --card-bg:#fff; --evt-bg:#ffeaa7; --rsc-bg:#55efc4; --pnish-bg:#ff7675; --text:#2d3436; --btn-l:#ff7675; --btn-r:#74b9ff; --btn-e:#fdcb6e; }
-body { font-family:sans-serif; background:var(--bg-color); display:flex; justify-content:center; align-items:center; height:100vh; margin:0; color:var(--text); }
-#game-container { width:100%; max-width:420px; background:var(--card-bg); border-radius:20px; box-shadow:0 15px 35px rgba(0,0,0,0.15); display:flex; flex-direction:column; height:90vh; max-height:750px; position:relative; overflow:hidden; }
-
+:root { --bg:#f0f2f5; --card:#fff; --evt:#ffeaa7; --rsc:#55efc4; --pns:#ff7675; --txt:#2d3436; --bl:#ff7675; --br:#74b9ff; --be:#fdcb6e; }
+body { font-family:sans-serif; background:var(--bg); display:flex; justify-content:center; align-items:center; height:100vh; margin:0; color:var(--txt); overflow:hidden; }
+#game-container { width:100%; max-width:420px; background:var(--card); border-radius:20px; box-shadow:0 15px 35px rgba(0,0,0,0.15); display:flex; flex-direction:column; height:90vh; max-height:750px; position:relative; overflow:hidden; }
 #start-screen { position:absolute; inset:0; background:rgba(255,255,255,0.98); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:500; text-align:center; padding:20px; }
-#start-screen h1 { font-size:2.2rem; color:#0984e3; margin-bottom:10px; }
-#start-screen p { font-size:1.1rem; color:#636e72; margin-bottom:30px; }
-.diff-btn { width:80%; padding:15px; margin:10px 0; font-size:1.2rem; font-weight:bold; color:#fff; border:none; border-radius:12px; cursor:pointer; transition:transform 0.2s; }
-.diff-btn:active { transform:scale(0.95); }
+.diff-btn { width:80%; padding:15px; margin:10px 0; font-size:1.2rem; font-weight:bold; color:#fff; border:none; border-radius:12px; cursor:pointer; }
 .btn-easy { background:#00b894; } .btn-med { background:#fdcb6e; color:#2d3436; } .btn-hard { background:#d63031; }
-
 #stats-board { display:flex; justify-content:space-around; padding:15px 10px 5px; background:#2d3436; color:#fff; font-size:1.2rem; }
 .stat { display:flex; flex-direction:column; align-items:center; position:relative; }
-.stat-icon { font-size:1.6rem; } .stat-value { font-weight:bold; margin-top:5px; transition:color 0.3s; }
-.float-text { position:absolute; top:25px; font-size:1.4rem; font-weight:900; pointer-events:none; animation:floatUp 1s cubic-bezier(0.25,0.8,0.25,1) forwards; z-index:100; text-shadow:0 2px 4px rgba(0,0,0,0.6); }
+.stat-icon { font-size:1.6rem; } .stat-value { font-weight:bold; margin-top:5px; }
+.float-text { position:absolute; top:25px; font-size:1.4rem; font-weight:900; animation:floatUp 1s forwards; z-index:100; text-shadow:0 2px 4px rgba(0,0,0,0.5); }
 .float-pos { color:#00e676; } .float-neg { color:#ff4757; }
-@keyframes floatUp { 0%{opacity:1; transform:translateY(0) scale(0.5);} 20%{transform:translateY(-10px) scale(1.2);} 100%{opacity:0; transform:translateY(-40px) scale(1);} }
+@keyframes floatUp { 0%{opacity:1; transform:translateY(0) scale(0.5);} 100%{opacity:0; transform:translateY(-40px) scale(1);} }
 .danger { color:#ff4757!important; animation:pulse 1s infinite alternate; }
 @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.2);} }
-
-#buff-board { background:#2d3436; color:#f1c40f; text-align:center; padding:5px 10px 10px; font-size:0.9rem; font-weight:bold; min-height:20px; }
-.buff-badge { background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:10px; margin:3px 5px; display:inline-block; }
-
-#buff-toast { position:absolute; top:30%; left:50%; transform:translate(-50%,-50%) scale(0.9); background:rgba(45,52,54,0.95); color:#fff; padding:15px 20px; border-radius:15px; text-align:center; z-index:200; pointer-events:none; opacity:0; transition:all 0.3s; width:80%; }
+#buff-board { background:#2d3436; color:#f1c40f; text-align:center; padding:5px; font-size:0.85rem; font-weight:bold; min-height:25px; display:flex; flex-wrap:wrap; justify-content:center; }
+.buff-badge { background:rgba(255,255,255,0.2); padding:2px 6px; border-radius:8px; margin:2px; }
+#buff-toast { position:absolute; top:30%; left:50%; transform:translate(-50%,-50%) scale(0.9); background:rgba(45,52,54,0.95); color:#fff; padding:15px; border-radius:15px; text-align:center; z-index:200; opacity:0; transition:0.3s; width:80%; pointer-events:none; }
 #buff-toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
-.toast-title { font-size:1.2rem; font-weight:bold; color:#fdcb6e; margin-bottom:8px;} .toast-desc { font-size:1rem; color:#dfe6e9; line-height:1.4; }
-
-#status-bar { display:flex; justify-content:space-between; padding:10px 20px; font-size:0.9rem; background:#dfe6e9; font-weight:bold; }
-#card-type { color:#0984e3; }
-#mission-board { background:#e1f5fe; color:#0277bd; padding:8px 20px; font-size:0.95rem; font-weight:bold; text-align:center; border-bottom:2px solid #b3e5fc; }
-
-#card-area { flex-grow:1; display:flex; justify-content:center; align-items:center; padding:25px; text-align:center; perspective:1000px; transition:background 0.3s;}
-#scenario-text { font-size:1.4rem; line-height:2.4rem; font-weight:500; transform-style:preserve-3d; backface-visibility:hidden; }
-.flip-out { animation:flipOut 0.4s forwards; } .flip-in { animation:flipIn 0.4s forwards; }
-@keyframes flipOut { 0%{transform:rotateY(0deg);opacity:1;} 100%{transform:rotateY(180deg);opacity:0;} }
-@keyframes flipIn { 0%{transform:rotateY(-180deg);opacity:0;} 100%{transform:rotateY(0deg);opacity:1;} }
-ruby { ruby-align:center; } rt { font-size:0.85rem; color:#d63031; font-weight:bold; }
-
-#controls { display:flex; height:130px; }
-.choice-btn { flex:1; border:none; font-size:1.15rem; font-weight:bold; color:#fff; cursor:pointer; padding:15px; transition:opacity 0.2s; display:flex; justify-content:center; align-items:center; line-height:1.5rem; }
-.choice-btn:active { opacity:0.8; }
-#btn-left { background:var(--btn-l); } #btn-right { background:var(--btn-r); } #btn-event { background:var(--btn-e); display:none; color:#2d3436; width:100%; }
-
-#game-over { position:absolute; inset:0; background:rgba(255,255,255,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; z-index:10; }
-#game-over h2 { font-size:2.5rem; color:#d63031; margin-bottom:10px; }
-#restart-btn { margin-top:30px; padding:12px 25px; font-size:1.2rem; background:#2d3436; color:#fff; border:none; border-radius:10px; cursor:pointer; }
+#status-bar { display:flex; justify-content:space-between; padding:8px 20px; font-size:0.9rem; background:#dfe6e9; font-weight:bold; }
+#mission-board { background:#e1f5fe; color:#0277bd; padding:8px; font-size:0.95rem; font-weight:bold; text-align:center; border-bottom:1px solid #b3e5fc; }
+#card-area { flex-grow:1; display:flex; justify-content:center; align-items:center; padding:25px; text-align:center; perspective:1000px; }
+#scenario-text { font-size:1.4rem; line-height:2.4rem; transition:0.4s; transform-style:preserve-3d; backface-visibility:hidden; }
+.flip-out { transform:rotateY(180deg); opacity:0; } .flip-in { animation:fIn 0.4s forwards; }
+@keyframes fIn { 0%{transform:rotateY(-180deg);opacity:0;} 100%{transform:rotateY(0deg);opacity:1;} }
+ruby { ruby-align:center; } rt { font-size:0.85rem; color:#d63031; }
+#controls { display:flex; height:120px; }
+.choice-btn { flex:1; border:none; font-size:1.1rem; font-weight:bold; color:#fff; cursor:pointer; display:flex; justify-content:center; align-items:center; }
+#btn-left { background:var(--bl); } #btn-right { background:var(--br); } #btn-event { background:var(--be); display:none; color:#2d3436; width:100%; }
+#game-over { position:absolute; inset:0; background:rgba(255,255,255,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; z-index:1000; }
 </style>
 </head>
 <body>
 <div id="game-container">
     <div id="start-screen">
-        <h1>華語生存戰</h1>
-        <p>平衡四大數值，完成任務疊加強大狀態！<br>（注意：單一數值超過 90 會引發極限反噬）</p>
-        <button class="diff-btn btn-easy" onclick="startGame(7)">簡單模式 (生存 7 天)</button>
-        <button class="diff-btn btn-med" onclick="startGame(14)">中等模式 (生存 14 天)</button>
-        <button class="diff-btn btn-hard" onclick="startGame(31)">困難模式 (生存 31 天)</button>
+        <h1>華語生存戰 🎮</h1>
+        <p>平衡四大數值，達成任務疊加 Buff！<br>注意：數值 > 90 會引發反噬 💥</p>
+        <button class="diff-btn btn-easy" onclick="startGame(7)">簡單 (7天)</button>
+        <button class="diff-btn btn-med" onclick="startGame(14)">中等 (14天)</button>
+        <button class="diff-btn btn-hard" onclick="startGame(31)">困難 (31天)</button>
     </div>
-
     <div id="stats-board">
-        <div class="stat" id="stat-container-energy" title="體力"><span class="stat-icon">⚡</span><span id="stat-energy" class="stat-value">50</span></div>
-        <div class="stat" id="stat-container-money" title="金錢"><span class="stat-icon">💰</span><span id="stat-money" class="stat-value">50</span></div>
-        <div class="stat" id="stat-container-social" title="人際"><span class="stat-icon">🤝</span><span id="stat-social" class="stat-value">50</span></div>
+        <div class="stat" id="s-energy">⚡<span id="v-energy" class="stat-value">50</span></div>
+        <div class="stat" id="s-money">💰<span id="v-money" class="stat-value">50</span></div>
+        <div class="stat" id="s-social">🤝<span id="v-social" class="stat-value">50</span></div>
+        <div class="stat" id="s-academic">📚<span id="v-academic" class="stat-value">50</span></div>
+    </div>
+    <div id="buff-board"></div>
+    <div id="mission-board">🎯 目標：<span id="m-text">無</span></div>
+    <div id="buff-toast"></div>
+    <div id="status-bar"><span id="c-type">日常</span><span>第 <span id="c-day">1</span> 天 / 共 <span id="m-day">14</span> 天</span></div>
+    <div id="card-area"><div id="scenario-text">載入中...</div></div>
+    <div id="controls">
+        <button id="btn-left" class="choice-btn" onclick="hChoice('left')">左</button>
+        <button id="btn-right" class="choice-btn" onclick="hChoice('right')">右</button>
+        <button id="btn-event" class="choice-btn" onclick="hChoice('event')">確認</button>
+    </div>
+    <div id="game-over"><h2 id="o-title">結束</h2><p id="o-msg"></p><button onclick="location.reload()" style="padding:10px 20px; cursor:pointer;">重玩</button></div>
+</div>
+
+<script>
+let stats={energy:50,money:50,social:50,academic:50}, cDay=1, mDay=14, curC=null, isA=false, recent=[], buffs=[], curM=null, pndO=null;
+
+const bEff = {
+    "sick":{name:"🤒感冒",dur:2,desc:"體力消耗x1.5",mod:(i)=>{if(i.energy<0)i.energy=Math.floor(i.energy*1.5);return i;}},
+    "heartbroken":{name:"💔傷心",dur:3,desc:"人際加分減半",mod:(i)=>{if(i.social>0)i.social=Math.floor(i.social*0.5);return i;}},
+    "poor":{name:"💸吃土",dur:2,desc:"金錢消耗x1.5",mod:(i)=>{if(i.money<0)i.money=Math.floor(i.money*1.5);return i;}},
+    "rich":{name:"🤑富有",dur:3,desc:"金錢加分x1.5,消耗減半",mod:(i)=>{if(i.money<0)i.money=Math.ceil(i.money*0.5);if(i.money>0)i.money=Math.floor(i.money*1.5);return i;}},
+    "energetic":{name:"⚡活力",dur:3,desc:"體力消耗減半",mod:(i)=>{if(i.energy<0)i.energy=Math.ceil(i.energy*0.5);return i;}},
+    "popular":{name:"✨人氣",dur:3,desc:"人際加分x1.5",mod:(i)=>{if(i.social>0)i.social=Math.floor(i.social*1.5);return i;}},
+    "focused":{name:"🧠專注",dur:3,desc:"學業加分x2",mod:(i)=>{if(i.academic>0)i.academic=Math.floor(i.academic*2);return i;}}
+};
+
+const mList=[
+    {t:"金錢達 70",c:()=>stats.money>=70,rb:"rich"}, {t:"學業達 70",c:()=>stats.academic>=70,rb:"focused"},
+    {t:"人際達 70",c:()=>stats.social>=70,rb:"popular"}, {t:"體力達 70",c:()=>stats.energy>=70,rb:"energetic"}
+];
+
+const nCards=[
+    {text:"👨‍🏫 老師問：「誰自願來解這題？」",left:{text:"🙋‍♂️ 我來！",imp:{energy:-5,money:0,social:+5,academic:+15}},right:{text:"🫣 低頭",imp:{energy:0,money:0,social:-5,academic:-5}}},
+    {text:"📝 明天要交報告，但你還沒寫...",left:{text:"☕ 熬夜",imp:{energy:-20,money:0,social:0,academic:+20}},right:{text:"🛌 睡覺",imp:{energy:+10,money:0,social:0,academic:-25}}},
+    {text:"😳 暗戀對象問：「去看電影 🍿？」",left:{text:"🥰 好啊！",imp:{energy:-10,money:-30,social:+30,academic:-10}},right:{text:"📚 讀書",imp:{energy:+5,money:0,social:-15,academic:+15}}},
+    {text:"👗 伴侶問：「我穿這件好看嗎？」",left:{text:"✨ 超好看",imp:{energy:0,money:0,social:+15,academic:0}},right:{text:"🤔 昨天那件好",imp:{energy:-5,money:0,social:-20,academic:0}}},
+    {text:"🧋 超貴限定珍珠奶茶...",left:{text:"🤤 買！",imp:{energy:+10,money:-25,social:+5,academic:0}},right:{text:"💧 喝水",imp:{energy:-5,money:+5,social:0,academic:0}}},
+    {text:"👵 學餐阿姨多送你一塊排骨！",left:{text:"😋 嘴甜道謝",imp:{energy:+15,money:0,social:+15,academic:0}},right:{text:"❌ 減肥退回",imp:{energy:-5,money:0,social:-15,academic:0}}},
+    {text:"📱 半夜三點還在滑短影音...",left:{text:"🤡 再看一部",imp:{energy:-25,money:0,social:5,academic:-10}},right:{text:"🛑 睡覺",imp:{energy:+20,money:0,social:0,academic:+10}}},
+    {text:"📦 收到老家寄來的零食！",left:{text:"🥰 獨吞",imp:{energy:+20,money:0,social:5,academic:0}},right:{text:"🤝 分同學",imp:{energy:10,money:0,social:20,academic:0}}}
+];
+
+const eCards=[
+    {text:"🌧️【突發】告白被拒絕...💔",btn:"😔",imp:{energy:-15,money:0,social:-10,academic:-10},ab:"heartbroken",isE:true},
+    {text:"🤧【突發】你不小心感冒了🤕",btn:"🍵",imp:{energy:-10,money:0,social:0,academic:0},ab:"sick",isE:true},
+    {text:"🎁【幸運】發現 1000 元！💸",btn:"🤑",imp:{energy:0,money:+30,social:0,academic:0},ab:null,isE:true}
+];
+
+const punCards={
+    energy:{text:"💥【反噬】體力爆表摔斷腿！",imp:{energy:-50,money:-20,social:0,academic:0},type:"p"},
+    money:{text:"💥【反噬】太有錢被詐騙！",imp:{energy:0,money:-50,social:-20,academic:0},type:"p"},
+    social:{text:"💥【反噬】社交過勞累倒！",imp:{energy:-30,money:0,social:0,academic:-40},type:"p"},
+    academic:{text:"💥【反噬】讀書讀到腦中風！",imp:{energy:-100,money:0,social:0,academic:0},type:"p"}
+};
+
+const resCards={
+    energy:{text:"👼【救援】校醫打了營養劑⚡",imp:{energy:+40,money:-10,social:0,academic:0},type:"r"},
+    money:{text:"👼【救援】收到清寒獎學金💰",imp:{energy:0,money:+40,social:0,academic:+10},type:"r"},
+    social:{text:"👼【救援】轉學生主動搭話🤝",imp:{energy:5,money:0,social:+40,academic:0},type:"r"},
+    academic:{text:"👼【救援】教授給補考機會📚",imp:{energy:-15,money:0,social:0,academic:+40},type:"r"}
+};
+
+function startGame(d){ mDay=d; document.getElementById("start-screen").style.display="none"; document.getElementById("m-day").innerText=d; stats={energy:50,money:50,social:50,academic:50}; cDay=1; buffs=[]; recent=[]; pndO=null; aMiss(); updateUI(); dCard(true); }
+
+function aMiss(){ curM=mList[Math.floor(Math.random()*mList.length)]; document.getElementById("m-text").innerText=curM.t; }
+
+function showT(t,d){ let el=document.getElementById("buff-toast"); el.innerHTML=`<b>${t}</b><br>${d}`; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),3000); }
+
+function dCard(skip=false){
+    let textEl=document.getElementById("scenario-text"); textEl.className=skip?"":"flip-in";
+    if(pndO){ curC=pndO; pndO=null; }
+    else{
+        let isE=Math.random()<0.25; const f=(a)=>a.filter(c=>!recent.includes(c.text));
+        if(isE) curC={...f(eCards)[Math.floor(Math.random()*f(eCards).length)]};
+        else curC={...f(nCards)[Math.floor(Math.random()*f(nCards).length)]};
+    }
+    document.getElementById("c-type").innerText=curC.type==="p"?"💥反噬":curC.type==="r"?"👼救援":curC.isE?"⚠️突發":"日常";
+    document.getElementById("card-area").style.background=curC.type==="p"?"var(--pns)":curC.type==="r"?"var(--rsc)":curC.isE?"var(--evt)":"transparent";
+    if(curC.isE||curC.type){ document.getElementById("btn-left").style.display="none"; document.getElementById("btn-right").style.display="none"; document.getElementById("btn-event").style.display="block"; document.getElementById("btn-event").innerText=curC.btn||"確認"; }
+    else{ document.getElementById("btn-left").style.display="flex"; document.getElementById("btn-right").style.display="flex"; document.getElementById("btn-event").style.display="none"; document.getElementById("btn-left").innerText=curC.left.text; document.getElementById("btn-right").innerText=curC.right.text; }
+    textEl.innerHTML=curC.text; recent.push(curC.text); if(recent.length>3)recent.shift();
+    if(!skip)setTimeout(()=>textEl.classList.remove("flip-in"),400); isA=false;
+}
+
+function hChoice(d){ if(isA)return; isA=true; document.getElementById("scenario-text").className="flip-out"; setTimeout(()=>pChoice(d),400); }
+
+function pChoice(d){
+    let rI=curC.isE||curC.type?{...curC.imp}:(d==='left'?{...curC.left.imp}:{...curC.right.imp});
+    if(curC.ab) { buffs.push({id:curC.ab,dL:bEff[curC.ab].dur}); showT("✨獲得狀態",bEff[curC.ab].name); }
+    let fI={...rI}; buffs.forEach(b=>{fI=bEff[b.id].mod(fI)});
+    ['energy','money','social','academic'].forEach(k=>{ 
+        if(fI[k]!==0){
+            let el=document.createElement("div"); el.className=`float-text ${fI[k]>0?'float-pos':'float-neg'}`; el.innerText=(fI[k]>0?'+':'')+fI[k];
+            document.getElementById(`s-${k}`).appendChild(el); setTimeout(()=>el.remove(),1000);
+        }
+        stats[k]=Math.max(0,Math.min(100,stats[k]+fI[k]));
+    });
+    buffs.forEach(b=>b.dL--); buffs=buffs.filter(b=>b.dL>0);
+    if(curM&&curM.c()){ let rb=bEff[curM.rb]; buffs.push({id:curM.rb,dL:rb.dur}); showT("🎯任務達成",`獲得${rb.name}`); curM=null; setTimeout(aMiss,3500); }
+    let ok=Object.keys(stats).find(k=>stats[k]>=90); if(ok&&curC.type!=="p") pndO=punCards[ok];
+    let fk=Object.keys(stats).find(k=>stats[k]<=0); if(fk&&Math.random()<0.2&&!curC.type){ stats[fk]=1; pndO=resCards[fk]; }
+    cDay++; updateUI(); cEnd();
+}
+
+function updateUI(){
+    ['energy','money','social','academic'].forEach(k=>{ let el=document.getElementById(`v-${k}`); el.innerText=stats[k]; stats[k]<=20?el.classList.add('danger'):el.classList.remove('danger'); });
+    document.getElementById("c-day").innerText=cDay;
+    document.getElementById("buff-board").innerHTML=buffs.map(b=>`<span class="buff-badge">${bEff[b.id].name}(${b.dL}天)</span>`).join("");
+}
+
+function cEnd(){
+    let msg=stats.energy<=0?"體力耗盡🚑":stats.money<=0?"沒錢休學💸":stats.social<=0?"孤獨爆棚🤐":stats.academic<=0?"成績太差📉":"";
+    if(msg){ document.getElementById("o-title").innerText="💀遊戲結束"; document.getElementById("o-msg").innerText=msg; document.getElementById("game-over").style.display="flex"; }
+    else if(cDay>mDay){ document.getElementById("o-title").innerText="🎉恭喜過關"; document.getElementById("o-msg").innerText=`生存${mDay}天成功！`; document.getElementById("game-over").style.display="flex"; }
+    else dCard();
+}
+</script>
+</body>
+</html>        <div class="stat" id="stat-container-social" title="人際"><span class="stat-icon">🤝</span><span id="stat-social" class="stat-value">50</span></div>
         <div class="stat" id="stat-container-academic" title="學業"><span class="stat-icon">📚</span><span id="stat-academic" class="stat-value">50</span></div>
     </div>
     <div id="buff-board"></div>
