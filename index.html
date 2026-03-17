@@ -76,13 +76,9 @@
         
         /* 翻牌動畫 Classes */
         /* 卡片翻走 (消失) */
-        .flip-out {
-            animation: flipOut 0.4s forwards;
-        }
+        .flip-out { animation: flipOut 0.4s forwards; }
         /* 卡片翻入 (出現) */
-        .flip-in {
-            animation: flipIn 0.4s forwards;
-        }
+        .flip-in { animation: flipIn 0.4s forwards; }
 
         /* 翻牌動畫關鍵幀 */
         @keyframes flipOut {
@@ -120,4 +116,240 @@
         #game-over h2 { font-size: 2.5rem; color: #d63031; margin-bottom: 10px; }
         #restart-btn {
             margin-top: 30px; padding: 12px 25px; font-size: 1.2rem;
-            background:
+            background: #2d3436; color: white; border: none; border-radius: 10px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="stats-board">
+        <div class="stat" title="體力"><span class="stat-icon">⚡</span><span id="stat-energy" class="stat-value">50</span></div>
+        <div class="stat" title="金錢"><span class="stat-icon">💰</span><span id="stat-money" class="stat-value">50</span></div>
+        <div class="stat" title="人際"><span class="stat-icon">🤝</span><span id="stat-social" class="stat-value">50</span></div>
+        <div class="stat" title="學業"><span class="stat-icon">📚</span><span id="stat-academic" class="stat-value">50</span></div>
+    </div>
+    
+    <div id="buff-board"></div>
+
+    <div id="status-bar">
+        <span id="card-type">日常選擇</span>
+        <span>第 <span id="current-day">1</span> 天 / 共 7 天</span>
+    </div>
+
+    <div id="card-area">
+        <div id="scenario-text" class="flip-in">載入中...</div>
+    </div>
+
+    <div id="controls">
+        <button id="btn-left" class="choice-btn" onclick="handleChoice('left')">左</button>
+        <button id="btn-right" class="choice-btn" onclick="handleChoice('right')">右</button>
+        <button id="btn-event" class="choice-btn" onclick="handleChoice('event')">確認</button>
+    </div>
+
+    <div id="game-over">
+        <h2 id="end-title">遊戲結束</h2>
+        <p id="end-message" style="font-size: 1.2rem; line-height: 1.8;">原因</p>
+        <button id="restart-btn" onclick="initGame()">再玩一次</button>
+    </div>
+</div>
+
+<script>
+    let stats = { energy: 50, money: 50, social: 50, academic: 50 };
+    let currentDay = 1;
+    const maxDays = 7;
+    let currentCard = null;
+    let isAnimating = false;
+
+    let activeBuffs = []; 
+    const buffEffects = {
+        "sick": { name: "🤒 輕微感冒", duration: 2, modify: (imp) => { if(imp.energy < 0) imp.energy = Math.floor(imp.energy * 1.5); return imp; } },
+        "scholar": { name: "🤓 學習狂熱", duration: 2, modify: (imp) => { if(imp.academic > 0) imp.academic = Math.floor(imp.academic * 1.5); return imp; } },
+        "heartbroken": { name: "💔 傷心欲絕", duration: 3, modify: (imp) => { if(imp.social > 0) imp.social = Math.floor(imp.social * 0.5); return imp; } }
+    };
+
+    const normalCards = [
+        {
+            text: "你暗戀的同學問你：「這週末要不要一起去看電影？」<br>但你下週一有很重要的考試。",
+            left: { text: "好啊！(開心赴約)", impact: { energy: -10, money: -30, social: +30, academic: -20 } },
+            right: { text: "下次吧，我要讀書...", impact: { energy: 0, money: 0, social: -15, academic: +15 } }
+        },
+        {
+            text: "你的好朋友剛剛跟伴侶<ruby>分<rt>fēn</rt>手<rt>shǒu</rt></ruby>了，在旁邊一直哭...",
+            left: { text: "陪他聊天，聽他訴苦", impact: { energy: -15, money: 0, social: +25, academic: -10 } },
+            right: { text: "叫他別哭了，快點寫作業", impact: { energy: 0, money: 0, social: -30, academic: +10 } }
+        },
+        {
+            text: "你的伴侶問你：「你覺得我今天穿這件衣服好看嗎？」",
+            left: { text: "很好看啊！很適合你！", impact: { energy: 0, money: 0, social: +15, academic: 0 } },
+            right: { text: "還好，昨天那件比較好看。", impact: { energy: -10, money: 0, social: -20, academic: 0 } }
+        },
+        {
+            text: "王老師說：「同學，你可以幫我把這些書搬到辦公室嗎？」<br>但你現在趕著去上廁所。",
+            left: { text: "不行，我現在沒空。", impact: { energy: 0, money: 0, social: -20, academic: -10 } },
+            right: { text: "老師不好意思，我先去一下洗手間，等一下馬上來幫您！", impact: { energy: -5, money: 0, social: +15, academic: +5 } }
+        },
+        {
+            text: "學校公佈欄寫著：『週五下午三點，圖書館<ruby>招<rt>zhāo</rt>募<rt>mù</rt></ruby>志工，提供免費晚餐。』",
+            left: { text: "報名志工！可以省一餐的錢", impact: { energy: -15, money: +15, social: +10, academic: +5 } },
+            right: { text: "太累了，早點回家休息", impact: { energy: +10, money: -10, social: 0, academic: 0 } }
+        }
+    ];
+
+    const eventCards = [
+        {
+            text: "【突發事件】<br>你昨天告白被拒絕了...心情非常低落。<br><strong>(獲得狀態：傷心欲絕 - 社交加分減半)</strong>",
+            btnText: "唉...",
+            impact: { energy: -20, money: 0, social: -10, academic: -10 },
+            applyBuff: "heartbroken"
+        },
+        {
+            text: "【浪漫驚喜】<br>你的伴侶突然送了你一份小禮物，你覺得超級開心！",
+            btnText: "太感動了！",
+            impact: { energy: +20, money: 0, social: +20, academic: 0 }
+        },
+        {
+            text: "【突發事件】<br>昨晚冷氣太冷，你早上起來覺得頭有點痛...<br><strong>(獲得狀態：輕微感冒 - 體力消耗增加)</strong>",
+            btnText: "多喝溫水...",
+            impact: { energy: -10, money: 0, social: 0, academic: 0 },
+            applyBuff: "sick"
+        }
+    ];
+
+    function initGame() {
+        stats = { energy: 50, money: 50, social: 50, academic: 50 };
+        currentDay = 1;
+        activeBuffs = [];
+        document.getElementById("game-over").style.display = "none";
+        updateUI();
+        drawCard(true); 
+    }
+
+    function drawCard(skipFlipIn = false) {
+        const isEvent = Math.random() < 0.25;
+        const textElement = document.getElementById("scenario-text");
+        
+        textElement.className = skipFlipIn ? "" : "flip-in";
+
+        if (isEvent) {
+            currentCard = { ...eventCards[Math.floor(Math.random() * eventCards.length)], isEvent: true };
+            document.getElementById("card-type").innerText = "⚠️ 突發事件";
+            document.getElementById("card-area").style.background = "var(--event-bg)";
+            document.getElementById("btn-left").style.display = "none";
+            document.getElementById("btn-right").style.display = "none";
+            document.getElementById("btn-event").style.display = "block";
+            document.getElementById("btn-event").innerHTML = currentCard.btnText;
+        } else {
+            currentCard = { ...normalCards[Math.floor(Math.random() * normalCards.length)], isEvent: false };
+            document.getElementById("card-type").innerText = "日常選擇";
+            document.getElementById("card-area").style.background = "transparent";
+            document.getElementById("btn-left").style.display = "flex";
+            document.getElementById("btn-right").style.display = "flex";
+            document.getElementById("btn-event").style.display = "none";
+            document.getElementById("btn-left").innerHTML = currentCard.left.text;
+            document.getElementById("btn-right").innerHTML = currentCard.right.text;
+        }
+        textElement.innerHTML = currentCard.text;
+
+        if (!skipFlipIn) {
+            setTimeout(() => {
+                textElement.classList.remove("flip-in");
+                isAnimating = false; 
+            }, 400); 
+        } else {
+            isAnimating = false; 
+        }
+    }
+
+    function handleChoice(direction) {
+        if (isAnimating) return; 
+        isAnimating = true;
+
+        const textElement = document.getElementById("scenario-text");
+        textElement.className = "flip-out";
+
+        setTimeout(() => {
+            processChoiceData(direction);
+        }, 400); 
+    }
+
+    function processChoiceData(direction) {
+        let rawImpact;
+        if (currentCard.isEvent) {
+            rawImpact = { ...currentCard.impact };
+            if (currentCard.applyBuff) addBuff(currentCard.applyBuff);
+        } else {
+            rawImpact = direction === 'left' ? { ...currentCard.left.impact } : { ...currentCard.right.impact };
+        }
+
+        let finalImpact = { ...rawImpact };
+        activeBuffs.forEach(buff => {
+            finalImpact = buffEffects[buff.id].modify(finalImpact);
+        });
+
+        stats.energy += finalImpact.energy;
+        stats.money += finalImpact.money;
+        stats.social += finalImpact.social;
+        stats.academic += finalImpact.academic;
+        for (let key in stats) { if (stats[key] > 100) stats[key] = 100; }
+        updateBuffs();
+        currentDay++;
+        updateUI();
+        checkGameEnd();
+    }
+
+    function addBuff(buffId) {
+        if (!activeBuffs.find(b => b.id === buffId)) {
+            activeBuffs.push({ id: buffId, daysLeft: buffEffects[buffId].duration });
+        }
+    }
+    
+    function updateBuffs() {
+        activeBuffs.forEach(buff => buff.daysLeft--);
+        activeBuffs = activeBuffs.filter(buff => buff.daysLeft > 0);
+    }
+
+    function updateUI() {
+        const statKeys = ['energy', 'money', 'social', 'academic'];
+        statKeys.forEach(key => {
+            const el = document.getElementById(`stat-${key}`);
+            el.innerText = stats[key];
+            if (stats[key] <= 20) { el.classList.add('danger'); } 
+            else { el.classList.remove('danger'); }
+        });
+        document.getElementById("current-day").innerText = currentDay;
+        const buffBoard = document.getElementById("buff-board");
+        if (activeBuffs.length > 0) {
+            buffBoard.innerHTML = activeBuffs.map(b => 
+                `<span class="buff-badge">${buffEffects[b.id].name} (${b.daysLeft}天)</span>`
+            ).join("");
+        } else { buffBoard.innerHTML = ""; }
+    }
+
+    function checkGameEnd() {
+        let over = false;
+        let message = "";
+        if (stats.energy <= 0) { over = true; message = "你太累了，在課堂上暈倒被送進醫院。<br><strong>(體力歸零)</strong>"; }
+        else if (stats.money <= 0) { over = true; message = "你身無分文，連搭公車回家的錢都沒有。<br><strong>(金錢歸零)</strong>"; }
+        else if (stats.social <= 0) { over = true; message = "因為太常拒絕別人，大家都不跟你說話了。<br><strong>(人際歸零)</strong>"; }
+        else if (stats.academic <= 0) { over = true; message = "期中考成績太差，老師要求你重修。<br><strong>(學業歸零)</strong>"; }
+        
+        if (!over && currentDay > maxDays) {
+            showGameOver("🎉 恭喜過關！", "你成功生存了一週！<br>華語應對能力、時間管理和校園感情都平衡得非常棒！");
+            return;
+        }
+        if (over) { showGameOver("💀 遊戲結束", message); } 
+        else { drawCard(); } 
+    }
+
+    function showGameOver(title, message) {
+        document.getElementById("end-title").innerText = title;
+        document.getElementById("end-message").innerHTML = message;
+        document.getElementById("game-over").style.display = "flex";
+    }
+
+    initGame();
+</script>
+
+</body>
+</html>
